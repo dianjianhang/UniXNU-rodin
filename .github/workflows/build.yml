@@ -1,10 +1,9 @@
-name: Resolver
+name: Full Build
 #
-# First CI milestone: make the UniXNU resolver run against this device
-# repository. It validates board.toml / feeds.toml / the SoC layer and
-# reports the resolved configuration, module origins and patch order.
+# CI workflow: resolve configuration then build kernel + package boot image.
+# Runs on ubuntu-latest (x86_64) but cross-compiles for arm64 target.
 # The SoC layer is supplied through --local-module, so this runs before
-# UniXNU-mt6899-common is published.
+# UniXNU-mt6899-common is published in feeds.toml.
 
 on:
   workflow_dispatch:
@@ -17,9 +16,9 @@ env:
   SOC_MODULE: soc:mt6899=UniXNU-mt6899-common
 
 jobs:
-  resolve:
+  build:
     runs-on: ubuntu-latest
-    timeout-minutes: 30
+    timeout-minutes: 60
     steps:
       - name: Checkout device repository
         uses: actions/checkout@v4
@@ -66,21 +65,28 @@ jobs:
           ./unixnu status -D "$UNIXNU_DEVICE" --local-module "$SOC_MODULE" 2>&1 | tee status_plain.log
           grep -i "error\|fail" status.json || echo "status OK"
 
-      - name: Build tree (assemble only)
+      - name: Build kernel (cross-compile for arm64)
+        run: |
+          cd UniXNU
+          ./unixnu build kernel -D "$UNIXNU_DEVICE" --local-module "$SOC_MODULE" 2>&1 | tee build_kernel.log
+          grep -i "error\|fail" build_kernel.log || echo "kernel build OK"
+
+      - name: Build tree (assemble boot image)
         run: |
           cd UniXNU
           ./unixnu tree -D "$UNIXNU_DEVICE" --local-module "$SOC_MODULE" 2>&1 | tee tree.log
           grep -i "error\|fail" tree.log || echo "tree OK"
 
-      - name: Upload resolver output
+      - name: Upload build artifacts
         uses: actions/upload-artifact@v4
         with:
-          name: resolver-status
+          name: build-artifacts
           path: |
             UniXNU/status.json
             UniXNU/unixnu.lock
             UniXNU/defconfig.log
             UniXNU/fetch.log
             UniXNU/status_plain.log
+            UniXNU/build_kernel.log
             UniXNU/tree.log
           if-no-files-found: warn
