@@ -51,36 +51,59 @@ jobs:
           sudo apt-get update -qq
           sudo apt-get install -y -qq device-tree-compiler ninja-build unifdef
 
+      - name: Debug environment
+        run: |
+          echo "GITHUB_WORKSPACE=$GITHUB_WORKSPACE"
+          echo "UNIXNU_DEVICE=$UNIXNU_DEVICE"
+          echo "SOC_MODULE=$SOC_MODULE"
+          ls -la "$UNIXNU_DEVICE/board.toml" || echo "board.toml MISSING"
+          head -5 "$UNIXNU_DEVICE/board.toml" || true
+
       - name: Resolver defconfig
         run: |
           cd UniXNU
+          set -o pipefail
           ./unixnu defconfig rodin_defconfig 2>&1 | tee defconfig.log
-          grep -i "error\|fail\|wrong\|no board.toml" defconfig.log && exit 1 || echo "defconfig OK"
+          rc=${PIPESTATUS[0]}
+          echo "defconfig exit code: $rc"
+          test "$rc" -eq 0
 
       - name: Resolver fetch
         run: |
           cd UniXNU
+          set -o pipefail
           ./unixnu fetch 2>&1 | tee fetch.log
-          grep -i "error\|fail\|not found" fetch.log && exit 1 || echo "fetch OK"
+          rc=${PIPESTATUS[0]}
+          echo "fetch exit code: $rc"
+          test "$rc" -eq 0
 
       - name: Resolver status
         run: |
           cd UniXNU
+          set -o pipefail
           ./unixnu status --json 2>&1 | tee status.json
           ./unixnu status 2>&1 | tee status_plain.log
-          grep -i "error\|fail" status.json && exit 1 || echo "status OK"
+          rc=${PIPESTATUS[0]}
+          echo "status exit code: $rc"
+          test "$rc" -eq 0
 
       - name: Build kernel (cross-compile for arm64)
         run: |
           cd UniXNU
+          set -o pipefail
           ./unixnu build kernel 2>&1 | tee build_kernel.log
-          grep -i "error\|fail" build_kernel.log && exit 1 || echo "kernel build OK"
+          rc=${PIPESTATUS[0]}
+          echo "kernel exit code: $rc"
+          test "$rc" -eq 0
 
       - name: Assemble tree
         run: |
           cd UniXNU
+          set -o pipefail
           ./unixnu tree 2>&1 | tee tree.log
-          grep -i "error\|fail" tree.log && exit 1 || echo "tree OK"
+          rc=${PIPESTATUS[0]}
+          echo "tree exit code: $rc"
+          test "$rc" -eq 0
 
       - name: Collect outputs
         run: |
