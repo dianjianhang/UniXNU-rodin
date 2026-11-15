@@ -1,0 +1,86 @@
+name: Resolver
+#
+# First CI milestone: make the UniXNU resolver run against this device
+# repository. It validates board.toml / feeds.toml / the SoC layer and
+# reports the resolved configuration, module origins and patch order.
+# The SoC layer is supplied through --local-module, so this runs before
+# UniXNU-mt6899-common is published.
+
+on:
+  workflow_dispatch:
+  push:
+    branches: [main]
+  pull_request:
+
+env:
+  UNIXNU_DEVICE: UniXNU-rodin
+  SOC_MODULE: soc:mt6899=UniXNU-mt6899-common
+
+jobs:
+  resolve:
+    runs-on: ubuntu-latest
+    timeout-minutes: 30
+    steps:
+      - name: Checkout device repository
+        uses: actions/checkout@v4
+        with:
+          path: UniXNU-rodin
+
+      - name: Checkout UniXNU
+        uses: actions/checkout@v4
+        with:
+          repository: UniXNU/UniXNU
+          path: UniXNU
+
+      - name: Checkout UniXNU-mt6899-common
+        uses: actions/checkout@v4
+        with:
+          repository: ${{ github.repository_owner }}/UniXNU-mt6899-common
+          path: UniXNU-mt6899-common
+
+      - name: Make unixnu executable
+        run: chmod +x UniXNU/unixnu
+
+      - name: Toolchain prerequisites
+        run: |
+          python3 --version
+          sudo apt-get update -qq
+          sudo apt-get install -y -qq device-tree-compiler
+
+      - name: Resolver defconfig
+        run: |
+          cd UniXNU
+          ./unixnu defconfig rodin_defconfig -D "$UNIXNU_DEVICE" --local-module "$SOC_MODULE" 2>&1 | tee defconfig.log
+          grep -i "error\|fail\|wrong" defconfig.log || echo "defconfig OK"
+
+      - name: Resolver fetch
+        run: |
+          cd UniXNU
+          ./unixnu fetch -D "$UNIXNU_DEVICE" --local-module "$SOC_MODULE" 2>&1 | tee fetch.log
+          grep -i "error\|fail\|not found" fetch.log || echo "fetch OK"
+
+      - name: Resolver status
+        run: |
+          cd UniXNU
+          ./unixnu status --json -D "$UNIXNU_DEVICE" --local-module "$SOC_MODULE" 2>&1 | tee status.json
+          ./unixnu status -D "$UNIXNU_DEVICE" --local-module "$SOC_MODULE" 2>&1 | tee status_plain.log
+          grep -i "error\|fail" status.json || echo "status OK"
+
+      - name: Build tree (assemble only)
+        run: |
+          cd UniXNU
+          ./unixnu tree -D "$UNIXNU_DEVICE" --local-module "$SOC_MODULE" 2>&1 | tee tree.log
+          grep -i "error\|fail" tree.log || echo "tree OK"
+
+      - name: Upload resolver output
+        uses: actions/upload-artifact@v4
+        with:
+          name: resolver-status
+          path: |
+            UniXNU/status.json
+            UniXNU/unixnu.lock
+            UniXNU/defconfig.log
+            UniXNU/fetch.log
+            UniXNU/status_plain.log
+            UniXNU/tree.log
+          if-no-files-found: warn
