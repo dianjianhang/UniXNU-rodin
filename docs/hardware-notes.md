@@ -163,3 +163,26 @@ The `turbo4分区/` working directory holds a full partition dump dated
 - The MTK boot chain differs from Qualcomm targets; the bootloader handoff
   and DTB handling need a dedicated survey before anything is flashed.
 - Hashes are pinned in `proprietary-files.txt`.
+
+## Resolver-chain verification (2026-11-15)
+
+The UniXNU resolver chain was first verified end-to-end for rodin on
+this date, on a local aarch64 Linux host (Debian 12, gcc 12.2.0):
+
+| Step | Result | Notes |
+|------|--------|-------|
+| `unixnu defconfig rodin_defconfig` | exit 0 | `.config` written under out/ |
+| `unixnu fetch` | exit 0 | xnu d8b80295, libplatform, libdispatch, AvailabilityVersions, mu_basecore + 5 submodules, libpthread, corecrypto-2023, IOStorageFamily |
+| `unixnu status --json` | exit 0 | profiles arch=arm64 + soc=mt6899-common resolved; 14 porting areas validated |
+| `unixnu tree` | exit 0 | build tree assembled under out/rodin/ |
+
+Configuration fixes that made this work:
+
+- `feeds.toml`: mt6899 pinned to UniXNU-mt6899-common
+  `da0f6103bd3529a78c4ce1a2818190a07a6734c1` (was `REQUIRED_...`).
+- `board.toml`: `schema_version = 2` and `soc_source = "mt6899"`
+  restored (profiles.py requires both when schema_version = 2).
+- CI passes the SoC layer via `--local-module`, which bypasses the
+  feeds pin until the source repository is published upstream.
+- `porting.toml`: now passes `scripts/porting-record.py check` (14
+  structured areas; device.summary added; canonical area IDs).
