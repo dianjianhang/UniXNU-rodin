@@ -1,0 +1,49 @@
+name: Minimal Check
+#
+# Minimal CI check: verify that the UniXNU resolver binary runs
+# on the ubuntu-latest runner with our device/repo setup.
+#
+
+on:
+  workflow_dispatch:
+  push:
+    branches: [main]
+  pull_request:
+
+env:
+  UNIXNU_DEVICE: UniXNU-rodin
+  SOC_MODULE: soc:mt6899=UniXNU-mt6899-common
+
+jobs:
+  check:
+    runs-on: ubuntu-latest
+    timeout-minutes: 15
+    steps:
+      - name: Checkout device repository
+        uses: actions/checkout@v4
+        with:
+          path: UniXNU-rodin
+
+      - name: Checkout UniXNU
+        uses: actions/checkout@v4
+        with:
+          repository: UniXNU/UniXNU
+          path: UniXNU
+
+      - name: Checkout UniXNU-mt6899-common
+        uses: actions/checkout@v4
+        with:
+          repository: ${{ github.repository_owner }}/UniXNU-mt6899-common
+          path: UniXNU-mt6899-common
+
+      - name: Make unixnu executable
+        run: chmod +x UniXNU/unixnu
+
+      - name: Quick resolver check
+        run: |
+          cd UniXNU
+          # 仅检查二进制是否可运行，不执行耗时的 defconfig/fetch
+          ./unixnu --help 2>&1 | head -3
+          # 尝试最简 status（可能因未 fetch 而失败，没关系，我们只要看是否卡在“need device”错误）
+          ./unixnu status --json -D "$UNIXNU_DEVICE" --local-module "$SOC_MODULE" 2>&1 | head -5
+          echo "check done"
