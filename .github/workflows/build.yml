@@ -4,6 +4,11 @@ name: Full Build
 # Runs on ubuntu-latest (x86_64) but cross-compiles for arm64 target.
 # The SoC layer is supplied through --local-module, so this runs before
 # UniXNU-mt6899-common is published in feeds.toml.
+#
+# NOTE: -D/--device paths must be ABSOLUTE. The device repository sits
+# next to (not inside) the UniXNU checkout, so a relative UNIXNU_DEVICE
+# resolved against the UniXNU working directory and failed with
+# "has no board.toml".
 
 on:
   workflow_dispatch:
@@ -12,8 +17,8 @@ on:
   pull_request:
 
 env:
-  UNIXNU_DEVICE: UniXNU-rodin
-  SOC_MODULE: soc:mt6899=UniXNU-mt6899-common
+  UNIXNU_DEVICE: ${{ github.workspace }}/UniXNU-rodin
+  SOC_MODULE: soc:mt6899=${{ github.workspace }}/UniXNU-mt6899-common
 
 jobs:
   build:
@@ -44,44 +49,52 @@ jobs:
         run: |
           python3 --version
           sudo apt-get update -qq
-          sudo apt-get install -y -qq device-tree-compiler
+          sudo apt-get install -y -qq device-tree-compiler ninja-build unifdef
 
       - name: Resolver defconfig
         run: |
           cd UniXNU
-          ./unixnu defconfig rodin_defconfig -D "$UNIXNU_DEVICE" --local-module "$SOC_MODULE" 2>&1 | tee defconfig.log
-          grep -i "error\|fail\|wrong" defconfig.log || echo "defconfig OK"
+          ./unixnu defconfig rodin_defconfig 2>&1 | tee defconfig.log
+          grep -i "error\|fail\|wrong\|no board.toml" defconfig.log && exit 1 || echo "defconfig OK"
 
       - name: Resolver fetch
         run: |
           cd UniXNU
-          ./unixnu fetch -D "$UNIXNU_DEVICE" --local-module "$SOC_MODULE" 2>&1 | tee fetch.log
-          grep -i "error\|fail\|not found" fetch.log || echo "fetch OK"
+          ./unixnu fetch 2>&1 | tee fetch.log
+          grep -i "error\|fail\|not found" fetch.log && exit 1 || echo "fetch OK"
 
       - name: Resolver status
         run: |
           cd UniXNU
-          ./unixnu status --json -D "$UNIXNU_DEVICE" --local-module "$SOC_MODULE" 2>&1 | tee status.json
-          ./unixnu status -D "$UNIXNU_DEVICE" --local-module "$SOC_MODULE" 2>&1 | tee status_plain.log
-          grep -i "error\|fail" status.json || echo "status OK"
+          ./unixnu status --json 2>&1 | tee status.json
+          ./unixnu status 2>&1 | tee status_plain.log
+          grep -i "error\|fail" status.json && exit 1 || echo "status OK"
 
       - name: Build kernel (cross-compile for arm64)
         run: |
           cd UniXNU
-          ./unixnu build kernel -D "$UNIXNU_DEVICE" --local-module "$SOC_MODULE" 2>&1 | tee build_kernel.log
-          grep -i "error\|fail" build_kernel.log || echo "kernel build OK"
+          ./unixnu build kernel 2>&1 | tee build_kernel.log
+          grep -i "error\|fail" build_kernel.log && exit 1 || echo "kernel build OK"
 
-      - name: Build tree (assemble boot image)
+      - name: Assemble tree
         run: |
           cd UniXNU
-          ./unixnu tree -D "$UNIXNU_DEVICE" --local-module "$SOC_MODULE" 2>&1 | tee tree.log
-          grep -i "error\|fail" tree.log || echo "tree OK"
+          ./unixnu tree 2>&1 | tee tree.log
+          grep -i "error\|fail" tree.log && exit 1 || echo "tree OK"
 
-      - name: Build tree (assemble boot image)
+      - name: Collect outputs
         run: |
           cd UniXNU
-          ./unixnu tree -D "$UNIXNU_DEVICE" --local-module "$SOC_MODULE" 2>&1 | tee tree.log
-          grep -i "error\|fail" tree.log || echo "tree OK"
+          # boot image lands under out/<device>/boot when the build completes
+          mkdir -p artifact/boot
+          if [ -f out/rodin/boot/boot.img ]; then
+            cp out/rodin/boot/boot.img artifact/boot/
+          fi
+          if [ -f out/rodin/boot/boot.image ]; then
+            cp out/rodin/boot/boot.image artifact/boot/
+          fi
+          find out -name "boot*" -maxdepth 4 -type f 2>/dev/null || true
+          find out -name "*.macho" -o -name "kernel*" -maxdepth 5 -type f 2>/dev/null | head -10 || true
 
       - name: Upload build artifacts
         uses: actions/upload-artifact@v4
@@ -95,5 +108,5 @@ jobs:
             UniXNU/status_plain.log
             UniXNU/build_kernel.log
             UniXNU/tree.log
-            UniXNU/rodin/boot/boot.image
+            UniXNU/artifact/boot/*
           if-no-files-found: warn
