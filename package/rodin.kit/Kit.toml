@@ -1,0 +1,13 @@
+schema = 1
+
+[kit]
+name = "rodin"
+version = "0.0.1"
+description = "Redmi Turbo 4 / POCO X7 Pro (rodin) UniXNU payload package"
+
+[match]
+arch = "AARCH64"
+fdt_compatible = ["xiaomi,rodin", "mediatek,mt6899"]
+
+# [[driver]], [[overlay]] and [[kext]] entries are added as drivers are
+# adapted. See /porting/device-repository#package-and-kits.

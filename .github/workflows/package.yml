@@ -1,0 +1,14 @@
+name: Package
+on:
+  workflow_dispatch:
+
+jobs:
+  package:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+      - name: Package rodin artifacts
+        run: |
+          # TODO: implement scripts/package.sh first; then this workflow
+          # builds the UEFI firmware and boot image from a clean checkout.
+          ./scripts/package.sh

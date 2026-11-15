@@ -1,0 +1,45 @@
+/dts-v1/;
+
+/*
+ * Redmi Turbo 4 / POCO X7 Pro (rodin) board description.
+ *
+ * The build resolves the "soc:" include from UniXNU-mt6899-common via
+ * include_dirs = ["soc:dts"] in board.toml.
+ * Values marked CONFIRMED come from the stock vendor DTB
+ * (.cache/firmware/rodin-vendor.dtb) extracted from vendor_boot.img.
+ */
+
+/include/ "mt6899.dtsi"
+
+/ {
+    model = "Redmi Turbo 4 (rodin)"; /* vendor DTB model: "MT6899" */
+    compatible = "xiaomi,rodin", "mediatek,mt6899";
+
+    /* CONFIRMED: vendor DTB declares memory@40000000, 1 GiB window
+     * (reg = <0 0x40000000 0 0x40000000>). Device variants ship 8/12/16 GiB;
+     * the larger DRAM layout must be confirmed against the bootloader and
+     * memory map before the kernel maps more than this window. */
+    memory@40000000 {
+        device_type = "memory";
+        reg = <0x0 0x40000000 0x0 0x40000000>;
+    };
+
+    /* CONFIRMED: vendor bootargs include console=tty0,
+     * androidboot.hardware=mt6899; PSCI 1.0 with method = "smc" —
+     * matches psci_method = "smc" in board.toml [payload.adt]. */
+
+    /* CONFIRMED: debug UART at serial@11001000 (mt6985-uart-dma DMA node);
+     * pinout wiring still TODO. */
+
+    /* TODO: reserved-memory regions (vendor DTB uses MTK-specific
+     * "mediatek,reserved" nodes; map them to UniXNU reservations) */
+
+    /* TODO: UFS host, PHY (ufsphy@112a0000), clocks, resets */
+
+    /* TODO: panel (DSI: mediatek,mt6899-dsi at disp1_dsi0) and backlight;
+     * touch CONFIRMED from module sources: Goodix GT9916R on SPI1
+     * (CLK GPIO50 / CSB GPIO51 / MISO GPIO52 / MOSI GPIO53),
+     * IRQ GPIO9, reset GPIO134, AVDD GPIO73 from mt6368_vtp. */
+
+    /* TODO: GPT / partition geometry inputs */
+};

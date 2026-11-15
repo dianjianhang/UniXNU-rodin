@@ -1,0 +1,15 @@
+# Required firmware inputs for rodin.
+# The device repository keeps proprietary inputs under .cache/firmware
+# (git-ignored); every tree links to that directory.
+# Format: <relative path>  <source description>  <sha256>
+
+boot.img         stock boot image, dumped from the rodin device  f02ff52a218d656e180e54b53a72e8f0ccda17a8fd33e96d134ae2391164d29e
+vendor_boot.img  stock vendor boot image, dumped from the rodin device  2a1c2e0cd5b734a0b91b5cf6f5c931f2e0072d11f26e63894e790d41b1c8b984
+rodin-vendor.dtb vendor DTB extracted from vendor_boot.img at offset 0x2965040  696d85fb8eaa9c1c83c523a277f144645d1c9d61a87a6f6ab77084ba4dc835a6
+rodin-vendor.dts decompiled rodin-vendor.dtb (dtc v1.6)  96b67f63f4c9bd4f9f4d9bde930447526122d5a9db8012d29a53882fe10356db
+dtbo.img            stock device-tree overlay image  6baa85dde97f96658bb75c3cc36c97ba131ce32ae0a8949334a25b4bfedb1e2e
+init_boot.img       stock init_boot (GKI ramdisk)  353eb7a3fb7e48d3908daef4f344548fbd98a74f11367708a1ef85205f0c942d
+connsys_wifi.img    MT7902 Wi-Fi firmware  8e7cdad09f7a1492c2551419858bdb477e6e92a80c88c422871de050133d38bf
+connsys_bt.img      MT7902 Bluetooth firmware  b9c6a42521be116137acefb6c83242c536fad8c66fc7f426355970a5dff647b9
+gpueb.img           Mali GPU MCU (gpueb) firmware  d719c7c2d6de50c8ecb94093fbaf1efaa8053d3c04aeb1326b11205cba7e368d
+gpt.bin             head of /dev/block/sdc containing the GPT (4096-byte blocks)  ebaf4b84f57c2ddc9a111003e9634e17335457bac7dc1a8d5a1478f4907ca717

@@ -1,0 +1,95 @@
+schema_version = 2
+
+[board]
+name = "rodin"
+soc = "mt6899"
+soc_source = "mt6899"
+os_profile = "ipados-17.7.11-21H461" # arm64 (non-arm64e) profile; rodin's A725 is a third-party SoC
+kit = "rodin"
+description = "Redmi Turbo 4 / POCO X7 Pro (rodin): Dimensity 8400-Ultra, 8/12/16 GiB LPDDR5X, 6.67\" AMOLED 1220x2712, UFS"
+
+[components]
+include = ["ArmDTPlatform", "ArmCpu", "GopFramebuffer"]
+# TODO: extend with reviewed catalog IDs once storage/display/input/network
+# implementations are chosen. The device include array replaces the
+# inherited array, so keep the complete list here.
+
+[device_tree]
+source = "device:dts/rodin.dts"
+include_dirs = ["soc:dts"]
+
+# [ipsw] — inherited from the OS profile (profiles/os/ipados-17.7.11-21H461):
+# url (iPad_Pro_HFR_17.7.11_21H461_Restore.ipsw), product "iPad7,1",
+# version "17.7.11", build "21H461", chip_id 32785, board_id 12, fetch list,
+# and the sha256 pins for the disk images. The device overrides nothing
+# until a rodin-specific identity is needed.
+
+[userdata]
+first_lba = 0x354300 # GPT 'userdata' entry, from /dev/block/sdc gpt dump 2026-11-15
+last_lba = 0x3d937f7 # ~233 GiB partition; disk block size 4096
+lba_bytes = 4096
+
+[kernel]
+defconfig = "rodin_defconfig"
+config_fragments = ["soc:configs/mt6899.config"]
+patch_series = ["soc:patches/xnu/series", "device:patches/xnu/series"]
+archives = [
+  # "component:<ID>", # kernel-stage component archive recipes, in dependency order
+]
+
+# [kernel.prelink] — inherited from the OS profile: emit_prelink tool,
+# kernelcache_sha256, slide -0x1000000, early_security_init address and the
+# root bundle list. The device adds nothing until rodin-specific ABI inputs
+# are confirmed.
+
+[firmware]
+config = "rodin"
+dsc = "Platforms/<Owner>/rodinPkg/rodin.dsc"
+fd = "Build/rodinPkg/{target}_CLANGPDB/FV/SILICIUM_UEFI.fd"
+preflight = ["scripts/check-rodin.py"] # TODO: create
+submodules = []
+patches = []
+packages = [
+  "{uefi}",
+  "{tree}/package",
+  "{tree}/drivers/DarwinBoot",
+  "{edk2}",
+]
+
+[firmware.defines]
+DEVICE_MODEL = "rodin"
+
+[bootimg.image]
+# Parsed from the stock rodin images (see docs/hardware-notes.md):
+#   boot.img:        ANDROID! header v4, kernel ~16.6 MiB, no boot ramdisk
+#   vendor_boot.img: VNDRBOOT header v4, page 4096,
+#                    kernel_load_addr 0x40000000, ramdisk_load_addr 0x66f00000
+# TODO: verify the UniXNU bootimg tool supports header v4 and that these
+# values match the Mu-Silicium device configuration; MTK boot chain needs
+# further review before flashing anything.
+base = 0x40000000
+pagesize = 4096
+kernel_offset = 0x0
+tags_offset = 0x0
+header_version = 4
+
+[payload]
+volume = "UniXNU"
+size_mib = 192
+loader = "firmware"
+title = "UniXNU"
+dram_size = "0x300000000" # 12 GiB test device (12+256 variant); DTB declares only a 1 GiB low window — verify the full map before kernel boot
+panic_screen = true
+timeout = 3
+kernel_args = ["-v"]
+
+# [payload.adt] — Apple identity (chip_id "0", iPad7,1 identity, artwork,
+# product-id) comes from the OS profile's ADT section. The device supplies
+# only board-specific values below.
+[payload.adt]
+owned_memory_size = "0x10000000"
+root_match_volume_uuid = "REQUIRED_ROOT_VOLUME_UUID" # owner chain root volume; create the payload once and record its UUID
+cpu_regs = "REQUIRED_<cpu regs>" # MPIDR list for the ADT CPU nodes; derive from mt6899.dtsi cpus
+psci_method = "smc" # confirmed: vendor DTB psci method
+packed_data_ramdisk = true
+unique_chip_id = "REQUIRED" # device-specific chip identity, generated with the payload

@@ -1,0 +1,12 @@
+# Rodin (Redmi Turbo 4 / POCO X7 Pro) device defconfig.
+# Syntax matches Linux defconfig. Applied after the fragments listed in
+# [kernel] config_fragments. Each CONFIG_XNU_<NAME> becomes XNU_<NAME> in
+# the kernel build. {tree} in a string expands to the build tree path.
+
+CONFIG_XNU_ARM_DT_PLATFORM=y
+CONFIG_XNU_ARMCPU=y
+CONFIG_XNU_NATIVE_UFS=y
+CONFIG_XNU_NATIVE_CS_HASH_CACHE=y
+CONFIG_XNU_CRYPTO_BOOTSTRAP="prelinked"
+CONFIG_XNU_OWNER_DATA_VOLUME_UUID="REQUIRED_<uuid>"
+CONFIG_XNU_OWNER_CACHE_VOLUME_UUID="REQUIRED_<uuid>"

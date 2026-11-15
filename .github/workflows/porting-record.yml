@@ -1,0 +1,19 @@
+name: Porting record
+on:
+  push:
+  pull_request:
+
+jobs:
+  check:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+        with:
+          fetch-depth: 0
+      - name: Check the device porting record
+        run: |
+          # TODO: wire the checker shipped in the UniXNU base repository:
+          #   python3 /path/to/UniXNU/scripts/porting-record.py check \
+          #     --device "$GITHUB_WORKSPACE"
+          echo "porting-record check: not wired yet"
+          exit 1

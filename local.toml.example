@@ -1,0 +1,8 @@
+# Copy this file to local.toml (git-ignored) and adjust for local development.
+
+# Override the SoC feed with a local checkout:
+#
+# [[source]]
+# kind = "soc"
+# name = "mt6899"
+# local = "../UniXNU-mt6899-common"

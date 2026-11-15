@@ -1,0 +1,7 @@
+# Source pins for rodin. Commit values must be reviewed 40-character commits.
+
+[[source]]
+name = "mt6899"
+kind = "soc"
+git = "REQUIRED_<UniXNU-mt6899-common repository URL>"
+commit = "REQUIRED_<40-character commit>"

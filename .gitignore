@@ -1,0 +1,13 @@
+# Local overrides and machine-specific files
+local.toml
+
+# Proprietary firmware inputs (see proprietary-files.txt)
+.cache/
+
+# Build outputs
+out/
+tree/
+build/
+
+# Editor
+*.swp
