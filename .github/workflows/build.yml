@@ -77,6 +77,12 @@ jobs:
           ./unixnu tree -D "$UNIXNU_DEVICE" --local-module "$SOC_MODULE" 2>&1 | tee tree.log
           grep -i "error\|fail" tree.log || echo "tree OK"
 
+      - name: Build tree (assemble boot image)
+        run: |
+          cd UniXNU
+          ./unixnu tree -D "$UNIXNU_DEVICE" --local-module "$SOC_MODULE" 2>&1 | tee tree.log
+          grep -i "error\|fail" tree.log || echo "tree OK"
+
       - name: Upload build artifacts
         uses: actions/upload-artifact@v4
         with:
@@ -89,4 +95,5 @@ jobs:
             UniXNU/status_plain.log
             UniXNU/build_kernel.log
             UniXNU/tree.log
+            UniXNU/rodin/boot/boot.image
           if-no-files-found: warn
