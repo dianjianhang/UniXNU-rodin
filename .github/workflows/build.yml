@@ -63,7 +63,7 @@ jobs:
         run: |
           cd UniXNU
           set -o pipefail
-          ./unixnu defconfig rodin_defconfig 2>&1 | tee defconfig.log
+          ./unixnu defconfig rodin_defconfig --local-module "$SOC_MODULE" 2>&1 | tee defconfig.log
           rc=${PIPESTATUS[0]}
           echo "defconfig exit code: $rc"
           test "$rc" -eq 0
@@ -72,7 +72,7 @@ jobs:
         run: |
           cd UniXNU
           set -o pipefail
-          ./unixnu fetch 2>&1 | tee fetch.log
+          ./unixnu fetch --local-module "$SOC_MODULE" 2>&1 | tee fetch.log
           rc=${PIPESTATUS[0]}
           echo "fetch exit code: $rc"
           test "$rc" -eq 0
@@ -81,8 +81,8 @@ jobs:
         run: |
           cd UniXNU
           set -o pipefail
-          ./unixnu status --json 2>&1 | tee status.json
-          ./unixnu status 2>&1 | tee status_plain.log
+          ./unixnu status --json --local-module "$SOC_MODULE" 2>&1 | tee status.json
+          ./unixnu status --local-module "$SOC_MODULE" 2>&1 | tee status_plain.log
           rc=${PIPESTATUS[0]}
           echo "status exit code: $rc"
           test "$rc" -eq 0
@@ -91,7 +91,7 @@ jobs:
         run: |
           cd UniXNU
           set -o pipefail
-          ./unixnu build kernel 2>&1 | tee build_kernel.log
+          ./unixnu build kernel --local-module "$SOC_MODULE" 2>&1 | tee build_kernel.log
           rc=${PIPESTATUS[0]}
           echo "kernel exit code: $rc"
           test "$rc" -eq 0
@@ -100,7 +100,7 @@ jobs:
         run: |
           cd UniXNU
           set -o pipefail
-          ./unixnu tree 2>&1 | tee tree.log
+          ./unixnu tree --local-module "$SOC_MODULE" 2>&1 | tee tree.log
           rc=${PIPESTATUS[0]}
           echo "tree exit code: $rc"
           test "$rc" -eq 0
