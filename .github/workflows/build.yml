@@ -120,6 +120,7 @@ jobs:
           find out -name "*.macho" -o -name "kernel*" -maxdepth 5 -type f 2>/dev/null | head -10 || true
 
       - name: Upload build artifacts
+        if: always()
         uses: actions/upload-artifact@v4
         with:
           name: build-artifacts
