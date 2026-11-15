@@ -1,7 +1,10 @@
 # Source pins for rodin. Commit values must be reviewed 40-character commits.
 
+# SoC layer for rodin (MT6899). The device repository owns the SoC
+# description; UniXNU resolves it through this pin once published.
+# CI currently supplies it via --local-module and also verifies the pin.
 [[source]]
 name = "mt6899"
 kind = "soc"
-git = "REQUIRED_<UniXNU-mt6899-common repository URL>"
-commit = "REQUIRED_<40-character commit>"
+git = "https://github.com/dianjianhang/UniXNU-mt6899-common.git"
+commit = "da0f6103bd3529a78c4ce1a2818190a07a6734c1"
