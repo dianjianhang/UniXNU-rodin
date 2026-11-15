@@ -16,6 +16,10 @@ on:
     branches: [main]
   pull_request:
 
+concurrency:
+  group: full-build-${{ github.ref }}
+  cancel-in-progress: true
+
 env:
   UNIXNU_DEVICE: ${{ github.workspace }}/UniXNU-rodin
   SOC_MODULE: soc:mt6899=${{ github.workspace }}/UniXNU-mt6899-common
