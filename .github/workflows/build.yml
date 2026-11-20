@@ -63,7 +63,9 @@ jobs:
           key: unixnu-toolchain-${{ runner.os }}-v1
 
       - name: Build UniXNU toolchain (clang with xnu builtins, ld64, mig, iig)
-        if: steps.cache.outputs.cache-hit != 'true'
+        # Idempotent: with a cache hit this only refreshes the /usr/bin shims
+        # (xcrun, plutil, codesign) that the cache cannot carry and skips the
+        # LLVM/cctools/mig/iig/lzfse builds because their outputs exist.
         run: |
           cd UniXNU
           sudo scripts/linux/setup-toolchain.py /opt/unixnu-linux
