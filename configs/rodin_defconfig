@@ -11,6 +11,10 @@ CONFIG_XNU_ARMCPU=y
 CONFIG_XNU_NATIVE_UFS=y
 CONFIG_XNU_NATIVE_CS_HASH_CACHE=y
 CONFIG_XNU_CRYPTO_BOOTSTRAP="prelinked"
+# Opt in to the archive builders. The real kernel build (XNU_BOOTSTRAP=0) links
+# source-derived archives (e.g. build/corecrypto-2023/libcorecrypto_kernel_noasm-namespaced.a)
+# produced by the [kernel] archives recipes; the bootstrap pass leaves this unset.
+CONFIG_XNU_BUILD_ARCHIVES=y
 
 # Owner volume UUIDs are only consumed when the owner boot manifest / scratch
 # Data mount are enabled (XNU_OWNER_BOOT_MANIFEST / XNU_OWNER_DATA_MOUNT). This
