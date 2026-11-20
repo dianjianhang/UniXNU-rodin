@@ -1,0 +1,20 @@
+diff --git a/EXTERNAL_HEADERS/CodeSignature/Entitlements.h b/EXTERNAL_HEADERS/CodeSignature/Entitlements.h
+new file mode 100644
+index 0000000..207005d
+--- /dev/null
++++ b/EXTERNAL_HEADERS/CodeSignature/Entitlements.h
+@@ -0,0 +1,14 @@
++/*
++ * Public CodeSignature/Entitlements.h wrapper.
++ *
++ * The macOS SDK ships this header from libsecurity_codesigning; the Linux
++ * cross toolchain has no such SDK. CoreEntitlements/CoreEntitlements.h is in
++ * EXTERNAL_HEADERS already and defines _CE_INDIRECT before including the
++ * real CoreEntitlements/Entitlements.h, so this file is just the SDK shell.
++ */
++#ifndef CODE_SIGNATURE_ENTITLEMENTS_H
++#define CODE_SIGNATURE_ENTITLEMENTS_H
++
++#include <CoreEntitlements/CoreEntitlements.h>
++
++#endif /* CODE_SIGNATURE_ENTITLEMENTS_H */
