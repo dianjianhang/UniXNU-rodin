@@ -14,7 +14,7 @@ summary = "Redmi Turbo 4 / POCO X7 Pro (rodin): MediaTek Dimensity 8400-Ultra (M
 [[area]]
 id = "configuration"
 status = "implemented"
-components = ["ArmVirtPlatform", "ArmDTPlatform", "ArmCpu", "XnuPrelink", "SoftwareAES"]
+components = ["ArmVirtPlatform", "ArmDTPlatform", "ArmCpu", "XnuPrelink", "SoftwareAES", "ShengUfs"]
 paths = ["board.toml", "feeds.toml", "configs/", "patches/xnu/series"]
 inputs = [
   "UniXNU-mt6899-common SoC repository (created, values unreviewed)",
@@ -35,6 +35,7 @@ findings = [
   "2026-11-20: [kernel] patch_series must be the canonical arch/soc/os/device list. With only soc+device none of the 55 ARM64 platform patches were applied, so the kernel build failed on pmap.h duplicate 'reserved10', the missing CodeSignature/Entitlements.h and vm_user.c '(void) indices'; the arch series fixes all three (non-apple-pmap-field, public-entitlements-header + offline-owner-systemos-mount, disabled-deferred-reclaim).",
   "2026-11-20: the arch and OS series deliberately omit native-smp-secondary.patch and sheng-platform-power.patch and expect the SoC series to supply them (same split as the sdm710 series). UniXNU-mt6899-common now ships both, giving 61 patches that all pass git apply --check against xnu d8b8029 (10063.141.1).",
   "2026-11-20: board.toml now selects component ArmVirtPlatform alongside ArmDTPlatform because CONFIG_XNU_ARMVIRT_PLATFORM=y needs build/armvirt-platform/libArmVirtPlatform.a at the kernel link; the real-HW platform remains ArmDTPlatform.",
+  "2026-11-20: board.toml now selects component ShengUfs because CONFIG_XNU_NATIVE_UFS=y needs build/sheng-ufs/libShengUfs.a at the kernel link; the real-HW UFS driver comes from the component, not from the OS prelink roots.",
 ]
 completion = ["Resolved profiles and patch order confirmed by ./unixnu status --json"]
 limits = ["The 61-patch series applies cleanly locally, but the kernel compile/link has not completed on CI yet (last failure was the necp_client.c include, before the arch series was enabled)."]
@@ -123,7 +124,7 @@ evidence = []
 [[area]]
 id = "storage"
 status = "planned"
-components = []
+components = ["VirtioMmioBlock", "VerifiedRoot", "ShengUfs"]
 paths = ["board.toml", "proprietary-files.txt"]
 inputs = ["Device GPT dump (userdata first/last LBA); UFS host and PHY details from vendor DTS"]
 configuration = ["board.toml [userdata]: first_lba=0x354300, last_lba=0x3d937f7, lba_bytes=4096 (from /dev/block/sdc GPT dump)"]

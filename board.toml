@@ -25,7 +25,7 @@ psci_method = "smc"
 verbose = false
 
 [components]
-include = ["ArmVirtPlatform", "ArmDTPlatform", "ArmCpu", "XnuPrelink", "SoftwareAES"]
+include = ["ArmVirtPlatform", "ArmDTPlatform", "ArmCpu", "XnuPrelink", "SoftwareAES", "ShengUfs"]
 # TODO: extend with reviewed catalog IDs once storage/display/input
 # implementations are chosen. The device include array replaces the
 # inherited array, so keep the complete list here。
@@ -55,6 +55,7 @@ archives = [
   "component:ArmVirtPlatform",
   "component:ArmDTPlatform",
   "component:ArmCpu",
+  "component:ShengUfs",
   "component:SoftwareAES",
   "build-software-aes-bindings.py",
   "build-mockfs-fixture.py",
