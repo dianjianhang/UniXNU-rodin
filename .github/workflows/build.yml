@@ -129,16 +129,20 @@ jobs:
       - name: Collect outputs
         run: |
           cd UniXNU
-          # boot image lands under out/<device>/boot when the build completes
+          # The boot image is written to out/<board>/<os>/<config>/boot/ by
+          # "unixnu bootimg" (firmware volume + DTB). Collect any that exist.
           mkdir -p artifact/boot
-          if [ -f out/rodin/boot/boot.img ]; then
-            cp out/rodin/boot/boot.img artifact/boot/
+          found=0
+          while IFS= read -r f; do
+            cp -v "$f" artifact/boot/ && found=$((found + 1))
+          done < <(find out -type f \( -name 'boot.img' -o -name 'boot.image' \) 2>/dev/null)
+          echo "boot images collected: $found"
+          if [ "$found" -eq 0 ]; then
+            echo "NOTE: no boot image produced. 'unixnu build kernel' + 'unixnu tree'"
+            echo "do not pack one; that needs a Mu-Silicium checkout plus"
+            echo "'unixnu build firmware --uefi DIR' and 'unixnu bootimg --uefi DIR'."
           fi
-          if [ -f out/rodin/boot/boot.image ]; then
-            cp out/rodin/boot/boot.image artifact/boot/
-          fi
-          find out -name "boot*" -maxdepth 4 -type f 2>/dev/null || true
-          find out -name "*.macho" -o -name "kernel*" -maxdepth 5 -type f 2>/dev/null | head -10 || true
+          find out -maxdepth 6 -type f \( -name '*.macho' -o -name 'kernel*' -o -name '*.fd' \) 2>/dev/null | head -20 || true
 
       - name: Upload build artifacts
         if: always()

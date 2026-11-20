@@ -11,5 +11,13 @@ CONFIG_XNU_ARMCPU=y
 CONFIG_XNU_NATIVE_UFS=y
 CONFIG_XNU_NATIVE_CS_HASH_CACHE=y
 CONFIG_XNU_CRYPTO_BOOTSTRAP="prelinked"
-CONFIG_XNU_OWNER_DATA_VOLUME_UUID="REQUIRED_<uuid>"
-CONFIG_XNU_OWNER_CACHE_VOLUME_UUID="REQUIRED_<uuid>"
+
+# Owner volume UUIDs are only consumed when the owner boot manifest / scratch
+# Data mount are enabled (XNU_OWNER_BOOT_MANIFEST / XNU_OWNER_DATA_MOUNT). This
+# bring-up configuration keeps both off, so the kernel uses its defaults.
+# Fill these with the observed APFS volume UUIDs before the first real boot:
+#   CONFIG_XNU_OWNER_DATA_VOLUME_UUID="the scratch Data volume UUID"
+#   CONFIG_XNU_OWNER_CACHE_VOLUME_UUID="the SystemOS cryptex volume UUID"
+#   CONFIG_XNU_OWNER_ROOT_VOLUME_UUID="[root] os_volume_uuid of the OS profile"
+# A placeholder such as "REQUIRED_<uuid>" is not a UUID and aborts the build
+# bootstrap step in scripts/build-xnu-4k-baseline.sh (uuid.UUID ValueError).
