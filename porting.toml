@@ -9,11 +9,11 @@ schema_version = 1
 name = "rodin"
 soc = "mt6899"
 os_profile = "ipados-17.7.11-21H461"
-summary = "Redmi Turbo 4 / POCO X7 Pro (rodin): MediaTek Dimensity 8400-Ultra (MT6899, 8x Cortex-A725 arm64), 12 GiB LPDDR5X, UFS storage. Porting target: UniXNU UEFI + XNU boot chain for the ipados-17.7.11-21H461 profile; configuration chain and UEFI scaffold are in place, drivers are in progress."
+summary = "Redmi Turbo 4 / POCO X7 Pro (rodin): MediaTek Dimensity 8400-Ultra (MT6899, 8x Cortex-A725 arm64), 12 GiB LPDDR5X, UFS storage. Porting target: UniXNU UEFI + XNU boot chain for the ipados-17.7.11-21H461 profile; configuration chain and UEFI scaffold are in place, drivers are in progress; the XNU kernel (61 patches) now compiles, links and prelinks on CI (kernel.macho)."
 
 [[area]]
 id = "configuration"
-status = "implemented"
+status = "host-verified"
 components = ["ArmVirtPlatform", "ArmDTPlatform", "ArmCpu", "XnuPrelink", "SoftwareAES"]
 paths = ["board.toml", "feeds.toml", "configs/", "patches/xnu/series"]
 inputs = [
@@ -36,18 +36,22 @@ findings = [
   "2026-11-20: the arch and OS series deliberately omit native-smp-secondary.patch and sheng-platform-power.patch and expect the SoC series to supply them (same split as the sdm710 series). UniXNU-mt6899-common now ships both, giving 61 patches that all pass git apply --check against xnu d8b8029 (10063.141.1).",
   "2026-11-20: board.toml now selects component ArmVirtPlatform alongside ArmDTPlatform because CONFIG_XNU_ARMVIRT_PLATFORM=y needs build/armvirt-platform/libArmVirtPlatform.a at the kernel link; the real-HW platform remains ArmDTPlatform.",
   "2026-11-20: board.toml no longer selects the native UFS component (ShengUfs/VirtioMmioBlock/VerifiedRoot were dropped again): CONFIG_XNU_NATIVE_UFS is back to unset and the kernel link needs the verified-root/boot-progress/IOStorageFamily closure that the current UniXNU tree does not yet provide, so the bring-up kernel builds without a native storage driver (same call as the cmi port).",
-  "2026-11-20: Full Build 44759829109 (bc322a2, UFS dropped) compiled the kernel through all subdirectories to the final link but failed with undefined symbol arm64_platform_sleep_hook referenced from ArmCpu::start in libArmCpu.a.",
-  "2026-11-20: .github/workflows/build.yml now injects a weak extern \"C\" arm64_platform_sleep_hook stub into any ArmVirtPlatform.cpp found in the UniXNU tree during CI (2851ec5) to unblock the kernel link; Full Build 44778700447 was cancelled in favor of 44779363326 after the porting record update.",
+  "2026-11-20: Full Build 44759829109 (bc322a2, UFS dropped) compiled the kernel through all subdirectories to the final link but failed with undefined symbol _arm64_platform_sleep_hook referenced from ArmCpu::start in libArmCpu.a.",
+  "2026-11-20: CI workaround added in .github/workflows/build.yml to inject a weak arm64 platform sleep hook stub into ArmVirtPlatform.cpp, but an initial attempt used the wrong Mach-O symbol name (exported __arm64_platform_sleep_hook) and Full Build 44780137892 failed with the same unresolved symbol.",
+  "2026-11-20: CI workaround corrected to export C symbol arm64_platform_sleep_hook (Mach-O _arm64_platform_sleep_hook); Full Build 44783213807 (b491e57) is in progress with the fix.",
+  '2026-11-21: Full Build 44783213807 (b491e57) SUCCEEDED end-to-end: all 61 patches applied cleanly, ArmVirtPlatform/ArmDTPlatform/ArmCpu/SoftwareAES compiled from source (component logs report "-Werror build and arm64-apple-ios17.0 object audit passed"), tree assembled ("drivers/ArmVirtPlatform has local changes" confirms the injected stub), and the kernel was linked and prelinked to kernel/kernel.macho sha256 5dbd83210c244b19d0b45e91f1acc1bcd773ef1dcddd8b0a260b184b6a12e2ec.',
+  '2026-11-21: The weak arm64_platform_sleep_hook stub resolved the final-link undefined symbol from ArmCpu::start; no further undefined symbols remained (the verified-root/IOStorageFamily closure was not needed because native UFS is dropped).',
 ]
 completion = ["Resolved profiles and patch order confirmed by ./unixnu status --json"]
-limits = ["The kernel link workaround for arm64_platform_sleep_hook is a bring-up stub in CI; the real platform sleep hook remains unimplemented for this board.", "Kernel compile/link completion on CI is pending the outcome of Full Build 44779363326."]
-next_action = ["Monitor Full Build 44779363326; if the kernel link succeeds, proceed to tree/packaging steps and evaluate firmware/bootimg requirements for producing a boot image."]
+limits = ["The kernel link workaround for _arm64_platform_sleep_hook remains a bring-up stub in CI; the real platform sleep hook is still unimplemented for this board.", "build kernel + tree do not produce a boot image: bootimg needs a Mu-Silicium checkout (--uefi), which does not yet exist for MT6899."]
+next_action = ["Provide a Mu-Silicium (uefi-sheng) checkout with an MT6899 silicon package, then run ./unixnu build firmware --uefi and ./unixnu bootimg --uefi to produce boot.img."]
 evidence = [
   { kind = "source", reference = "feeds.toml", result = "mt6899 pinned to UniXNU-mt6899-common da0f6103bd3529a78c4ce1a2818190a07a6734c1" },
   { kind = "host", reference = "porting.toml", command = "./unixnu release --no-deps --check -D . --local-module soc:mt6899=../UniXNU-mt6899-common", revision = "809c0ecf6c7cab96e47181a7235415a64c3cbfd9", result = "check done: 61 patches, configuration rodin_defconfig, OS ipados-17.7.11-21H461" },
   { kind = "host", reference = "porting.toml", command = "git apply <each of the 61 resolved patches> on xnu d8b8029", revision = "809c0ecf6c7cab96e47181a7235415a64c3cbfd9", result = "all 61 patches apply cleanly; 70 files changed" },
-  { kind = "host", reference = ".github/workflows/build.yml", command = "GitHub Actions Full Build 44759829109", revision = "bc322a2e4a9ddf0f69203d7c4c902d9e38e48a0f", result = "Kernel reached final link (LD mach.development.bcm2837.unstripped.noctf) but failed: undefined symbol arm64_platform_sleep_hook referenced from ArmCpu::start in libArmCpu.a" },
-  { kind = "host", reference = ".github/workflows/build.yml", command = "GitHub Actions Full Build 44779363326", revision = "5c7711edd33239db3287e27586c8dc5feda8184a", result = "In progress at time of record update; includes CI workaround injecting weak arm64_platform_sleep_hook stub into ArmVirtPlatform.cpp" },
+  { kind = "host", reference = ".github/workflows/build.yml", command = "GitHub Actions Full Build 44759829109", revision = "bc322a2e4a9ddf0f69203d7c4c902d9e38e48a0f", result = "Kernel reached final link (LD mach.development.bcm2837.unstripped.noctf) but failed: undefined symbol _arm64_platform_sleep_hook referenced from ArmCpu::start in libArmCpu.a" },
+  { kind = "host", reference = ".github/workflows/build.yml", command = "GitHub Actions Full Build 44780137892", revision = "d62da66adfa456f52af4fdfe5b792ef029d86eb3", result = "Kernel build failed at final link with undefined symbol _arm64_platform_sleep_hook (workaround exported wrong Mach-O symbol name __arm64_platform_sleep_hook)" },
+  { kind = "host", reference = ".github/workflows/build.yml", command = "GitHub Actions Full Build 44783213807", revision = "b491e57e29f12da0bd1b86ac6e8231604d7e74d8", result = "SUCCESS: 61 patches applied, components built from source, tree assembled, kernel linked and prelinked; kernel.macho sha256 5dbd83210c244b19d0b45e91f1acc1bcd773ef1dcddd8b0a260b184b6a12e2ec" },
 ]
 
 [[area]]
@@ -69,10 +73,11 @@ findings = [
   "Vendor ramdisk is ~41 MiB and lives in vendor_boot; boot.img carries only the kernel (~16.6 MiB).",
   "The vendor DTB (~444 KiB, FDT v17) sits inside vendor_boot.img at 0x2965040, after the vendor ramdisk.",
   "Vendor bootargs: console=tty0, androidboot.hardware=mt6899, vmalloc=400M, swiotlb=noforce.",
+  '2026-11-21: uefi-rodin scaffold exists (Platforms/Xiaomi/rodinPkg with dsc/fdf/dec/DeviceBuild.py and src/main.c memory/kernelcache/PSCI handoff stubs, board.toml [firmware.uefi]) but the MT6899 silicon package is absent from UniXNU/uefi-sheng, so the firmware is not buildable yet.',
 ]
 completion = ["Firmware builds and the stock bootloader jumps to BootShim"]
 limits = ["UEFI firmware for rodin does not exist; the bootimg v4 tool support is unverified."]
-next_action = ["Survey the Mu-Silicium base for an MTK reference and map the vendor DTB into the UEFI device-tree flow."]
+next_action = ["Add an MT6899 silicon package (PlatformSecLib/MemoryMapLib/ConfigurationMapLib plus clock/GPIO/PMIC/UFS/USB/display), then run stuart_setup/stuart_build and ./unixnu build firmware --uefi."]
 evidence = [
   { kind = "source", reference = "docs/hardware-notes.md", result = "Boot headers parsed and one FDT blob extracted; hashes pinned in proprietary-files.txt" },
 ]
@@ -282,7 +287,7 @@ procedure = ["Complete [kernel.prelink], [ipsw], [payload] in board.toml; implem
 findings = ["Area not yet surveyed in depth"]
 completion = ["./unixnu bootimg produces a flashable image from a clean checkout"]
 limits = ["All REQUIRED_ placeholders unfilled."]
-next_action = ["Supply the IPSW and kernelcache inputs and run the first ./unixnu build kernel attempt."]
+next_action = ["Kernel build now succeeds (Full Build 44783213807); assemble the prelinked kernel.macho into a boot image once a Mu-Silicium firmware volume exists, and implement scripts/package.sh."]
 evidence = []
 
 [[area]]
