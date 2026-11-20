@@ -11,3 +11,7 @@ build/
 
 # Editor
 *.swp
+
+# Local resolver output
+unixnu.lock
+defconfig.log
