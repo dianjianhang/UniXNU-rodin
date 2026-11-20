@@ -127,19 +127,19 @@ jobs:
           import pathlib
 
           marker = 'OSDefineMetaClassAndStructors (ArmVirtPlatform, IODTPlatformExpert)'
-          stub = '\n// Weak stub for arm64 platform sleep hook referenced from ArmCpu::start().\nextern "C" __attribute__((weak)) void _arm64_platform_sleep_hook(void) {}\n\n'
+          stub = '\n// Weak stub for arm64 platform sleep hook referenced from ArmCpu::start().\nextern "C" __attribute__((weak)) void arm64_platform_sleep_hook(void) {}\n\n'
           patched = 0
           for p in pathlib.Path('.').rglob('ArmVirtPlatform.cpp'):
               try:
                   s = p.read_text()
               except Exception:
                   continue
-              if '_arm64_platform_sleep_hook' in s:
+              if 'arm64_platform_sleep_hook' in s:
                   continue
               if marker in s:
                   s = s.replace(marker, stub + marker)
               else:
-                  s += '\nextern "C" __attribute__((weak)) void _arm64_platform_sleep_hook(void) {}\n'
+                  s += '\nextern "C" __attribute__((weak)) void arm64_platform_sleep_hook(void) {}\n'
               p.write_text(s)
               print('patched:', p)
               patched += 1
@@ -153,19 +153,19 @@ jobs:
           import pathlib
 
           marker = 'OSDefineMetaClassAndStructors (ArmVirtPlatform, IODTPlatformExpert)'
-          stub = '\n// Weak stub for arm64 platform sleep hook referenced from ArmCpu::start().\nextern "C" __attribute__((weak)) void _arm64_platform_sleep_hook(void) {}\n\n'
+          stub = '\n// Weak stub for arm64 platform sleep hook referenced from ArmCpu::start().\nextern "C" __attribute__((weak)) void arm64_platform_sleep_hook(void) {}\n\n'
           patched = 0
           for p in pathlib.Path('.').rglob('ArmVirtPlatform.cpp'):
               try:
                   s = p.read_text()
               except Exception:
                   continue
-              if '_arm64_platform_sleep_hook' in s:
+              if 'arm64_platform_sleep_hook' in s:
                   continue
               if marker in s:
                   s = s.replace(marker, stub + marker)
               else:
-                  s += '\nextern "C" __attribute__((weak)) void _arm64_platform_sleep_hook(void) {}\n'
+                  s += '\nextern "C" __attribute__((weak)) void arm64_platform_sleep_hook(void) {}\n'
               p.write_text(s)
               print('patched:', p)
               patched += 1
