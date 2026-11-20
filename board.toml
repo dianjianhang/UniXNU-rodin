@@ -49,9 +49,6 @@ lba_bytes = 4096
 defconfig = "rodin_defconfig"
 config_fragments = ["soc:configs/mt6899.config"]
 patch_series = ["arch:patches/xnu/series", "soc:patches/xnu/series", "os:patches/xnu/series", "device:patches/xnu/series"]
-archives = [
-  # "component:<ID>", # kernel-stage component archive recipes, in dependency order
-]
 
 # [kernel.prelink] — inherited from the OS profile: emit_prelink tool,
 
