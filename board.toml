@@ -25,7 +25,7 @@ psci_method = "smc"
 verbose = false
 
 [components]
-include = ["ArmDTPlatform", "ArmCpu", "XnuPrelink", "SoftwareAES"]
+include = ["ArmVirtPlatform", "ArmDTPlatform", "ArmCpu", "XnuPrelink", "SoftwareAES"]
 # TODO: extend with reviewed catalog IDs once storage/display/input
 # implementations are chosen. The device include array replaces the
 # inherited array, so keep the complete list here。
@@ -49,6 +49,17 @@ lba_bytes = 4096
 defconfig = "rodin_defconfig"
 config_fragments = ["soc:configs/mt6899.config"]
 patch_series = ["arch:patches/xnu/series", "soc:patches/xnu/series", "os:patches/xnu/series", "device:patches/xnu/series"]
+archives = [
+  "build-corecrypto-14.py",
+  "build-corecrypto-14.py --namespace",
+  "component:ArmVirtPlatform",
+  "component:ArmDTPlatform",
+  "component:ArmCpu",
+  "component:SoftwareAES",
+  "build-software-aes-bindings.py",
+  "build-mockfs-fixture.py",
+  "build-libpthread-kernel.py",
+]
 
 # [kernel.prelink] — inherited from the OS profile: emit_prelink tool,
 
