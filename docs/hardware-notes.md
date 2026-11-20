@@ -186,3 +186,40 @@ Configuration fixes that made this work:
   feeds pin until the source repository is published upstream.
 - `porting.toml`: now passes `scripts/porting-record.py check` (14
   structured areas; device.summary added; canonical area IDs).
+
+## Kernel-build chain verification (2026-11-20)
+
+The Full Build workflow now reaches the kernel build and gets past both
+bootstrap gates that blocked earlier runs:
+
+| Gate | Requirement | rodin setting |
+|------|-------------|---------------|
+| ArmCpu bring-up | `XNU_ARMCPU=1` needs `XNU_SOURCE_CORECRYPTO14=1` **and** (`XNU_ARMVIRT_PLATFORM=1` or `XNU_ARM_DT_PLATFORM=1`) | all four set in `configs/rodin_defconfig` |
+| pthread recipe | `XNU_SOURCE_PTHREAD=1` needs `XNU_SOURCE_CORECRYPTO14=1` | both set |
+| owner volumes | `CONFIG_XNU_OWNER_*_VOLUME_UUID` must parse as UUIDs (only read when the boot manifest / scratch Data mount is enabled) | left unset for bring-up; `REQUIRED_<uuid>` placeholders abort the bootstrap |
+
+CI notes:
+
+- `actions/cache` only saves in its post step when the job succeeds, so a
+  failing kernel build used to throw the whole toolchain away. The Full
+  Build now saves the toolchain in a dedicated `actions/cache/save` step
+  with `if: always()`.
+- The `UEFI Config Check` runs `unixnu release --no-deps --check`: it
+  validates defconfig, module resolution and the patch plan without
+  fetching sources/the IPSW (whose extraction needs the Linux toolchain's
+  `lzfse`) and without building anything.
+
+## Boot image status
+
+`boot.image` is not produced yet. `unixnu build kernel` + `unixnu tree`
+do not pack one; the chain is:
+
+1. `unixnu build firmware --uefi <Mu-Silicium checkout>` — EDK II build of
+   the UEFI firmware volume (`[firmware]` in `board.toml`), then
+2. `unixnu bootimg --uefi <Mu-Silicium checkout>` — BootShim + firmware
+   volume + DTB into `out/<board>/<os>/<config>/boot/boot.img`.
+
+Neither repository under `dianjianhang/` contains a Mu-Silicium
+(`uefi-sheng`) checkout, and the device repository still lists boot.img,
+vendor_boot.img, IPSW, GPT dump and the stock DTB as missing hardware
+inputs. Until those exist, CI can only report "no boot image produced".
