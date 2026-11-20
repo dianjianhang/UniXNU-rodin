@@ -167,5 +167,6 @@ jobs:
             UniXNU/status_plain.log
             UniXNU/build_kernel.log
             UniXNU/tree.log
+            UniXNU/out/**/logs/*.log
             UniXNU/artifact/boot/*
           if-no-files-found: warn
