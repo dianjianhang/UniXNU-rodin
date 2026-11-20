@@ -209,6 +209,40 @@ CI notes:
   fetching sources/the IPSW (whose extraction needs the Linux toolchain's
   `lzfse`) and without building anything.
 
+## XNU patch series (2026-11-20)
+
+`[kernel] patch_series` must be the canonical four-part list from
+`docs/porting/device-repository.md`:
+
+```toml
+patch_series = ["arch:patches/xnu/series", "soc:patches/xnu/series",
+                "os:patches/xnu/series", "device:patches/xnu/series"]
+```
+
+With only `soc:` and `device:` (the earlier rodin config) none of the 55
+ARM64 platform patches were applied, and the kernel build failed on three
+symptoms that are all fixed by the arch series:
+
+| Failure | Real cause | Fixing patch |
+|---------|-----------|--------------|
+| `pmap.h: duplicate member 'reserved10'` | plain arm64 + no Rosetta activates both `#else` branches | `non-apple-pmap-field.patch` (renames the PAC-side field) |
+| `'CodeSignature/Entitlements.h' file not found` | header comes from the macOS SDK, absent on the Linux toolchain | `public-entitlements-header.patch` + `offline-owner-systemos-mount.patch` |
+| `vm_user.c: use of undeclared identifier 'indices'` | `(void) indices;` left behind when deferred reclaim is off | `disabled-deferred-reclaim.patch` |
+
+The arch and OS series deliberately omit two files and expect the SoC
+series to supply them (the same split the sdm710 series uses):
+
+- `native-smp-secondary.patch` — `MAX_CPUS` 4 → 8 and MPIDR Affinity1
+  core numbering; MT6899 is 8x Cortex-A725 across clusters.
+- `sheng-platform-power.patch` — the `bsd_init.c` PMGR call site that
+  `zzz-boot-progress.patch` quotes as context. `XNU_SHENG_PMGR` is off for
+  rodin, so the block compiles to nothing; the context is still required.
+
+Both now live in `UniXNU-mt6899-common/patches/xnu/`. The resolved plan is
+61 patches for rodin, and all 61 apply cleanly to xnu `d8b8029`
+(10063.141.1). `ShengPlatformPower`'s archive is only force-loaded when
+`XNU_SHENG_PMGR=1`, so the off state needs no extra build input.
+
 ## Boot image status
 
 `boot.image` is not produced yet. `unixnu build kernel` + `unixnu tree`

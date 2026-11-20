@@ -32,12 +32,16 @@ findings = [
   "Scaffold created 2026-11-15; SoC pin da0f6103bd3529a78c4ce1a2818190a07a6734c1 now resolved in feeds.toml.",
   "Board DTS sources identified in MTK_kernel_device_modules: arch/arm64/boot/dts/mediatek/rodin.dts and companions.",
   "Resolver chain verified 2026-11-15: defconfig/fetch/status/tree exit 0 on Linux (aarch64 host, CI pending toolchain).",
+  "2026-11-20: [kernel] patch_series must be the canonical arch/soc/os/device list. With only soc+device none of the 55 ARM64 platform patches were applied, so the kernel build failed on pmap.h duplicate 'reserved10', the missing CodeSignature/Entitlements.h and vm_user.c '(void) indices'; the arch series fixes all three (non-apple-pmap-field, public-entitlements-header + offline-owner-systemos-mount, disabled-deferred-reclaim).",
+  "2026-11-20: the arch and OS series deliberately omit native-smp-secondary.patch and sheng-platform-power.patch and expect the SoC series to supply them (same split as the sdm710 series). UniXNU-mt6899-common now ships both, giving 61 patches that all pass git apply --check against xnu d8b8029 (10063.141.1).",
 ]
 completion = ["Resolved profiles and patch order confirmed by ./unixnu status --json"]
-limits = ["Toolchain build still running on CI; kernel/tree steps not yet end-to-end verified there."]
-next_action = ["Finish the cached UniXNU toolchain CI run, then verify build kernel and tree on the same host."]
+limits = ["The 61-patch series applies cleanly locally, but the kernel compile/link has not completed on CI yet (last failure was the necp_client.c include, before the arch series was enabled)."]
+next_action = ["Re-run Full Build with the four-part patch series; read out/**/logs/kernel-bootstrap.log if the next compile stage fails."]
 evidence = [
   { kind = "source", reference = "feeds.toml", result = "mt6899 pinned to UniXNU-mt6899-common da0f6103bd3529a78c4ce1a2818190a07a6734c1" },
+  { kind = "host", reference = "porting.toml", command = "./unixnu release --no-deps --check -D . --local-module soc:mt6899=../UniXNU-mt6899-common", revision = "809c0ecf6c7cab96e47181a7235415a64c3cbfd9", result = "check done: 61 patches, configuration rodin_defconfig, OS ipados-17.7.11-21H461" },
+  { kind = "host", reference = "porting.toml", command = "git apply <each of the 61 resolved patches> on xnu d8b8029", revision = "809c0ecf6c7cab96e47181a7235415a64c3cbfd9", result = "all 61 patches apply cleanly; 70 files changed" },
 ]
 
 [[area]]
