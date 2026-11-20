@@ -69,6 +69,16 @@ jobs:
           sudo scripts/linux/setup-toolchain.py /opt/unixnu-linux
           /opt/unixnu-linux/llvm/bin/clang --version
 
+      - name: Save toolchain cache
+        # actions/cache's own post step only saves when the whole job succeeds,
+        # so save explicitly here: a later build failure must not cost the
+        # next run another full toolchain build.
+        if: always() && steps.cache.outputs.cache-hit != 'true'
+        uses: actions/cache/save@v4
+        with:
+          path: /opt/unixnu-linux
+          key: unixnu-toolchain-${{ runner.os }}-v1
+
       - name: Verify toolchain
         run: /opt/unixnu-linux/llvm/bin/clang --version
 
